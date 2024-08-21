@@ -1,0 +1,34 @@
+name: flutter_application_1
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.2.2 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  table_calendar: ^3.0.0
+  intl: ^0.17.0
+  fl_chart: ^0.35.0  # Ensure this dependency is included
+  http: ^1.2.2
+  animations: ^2.0.11
+  font_awesome_flutter: ^10.7.0
+  shared_preferences: ^2.3.1
+  socket_io_client: ^2.0.3+1
+  firebase_core: ^2.11.0
+  firebase_messaging: ^14.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  cupertino_icons: 1.0.6
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/part_a.png
+    - assets/part_b.png
+    - assets/part_c.png
