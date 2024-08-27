@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
+import 'package:flutter_application_1/Service/AnnouncementService.dart';
 import 'package:flutter_application_1/technician_profile_page.dart';
 import 'Service/auth_service.dart';
+
 
 class SupervisorPage extends StatefulWidget {
   const SupervisorPage({super.key});
@@ -12,15 +14,21 @@ class SupervisorPage extends StatefulWidget {
 
 class _SupervisorPageState extends State<SupervisorPage> {
   final AuthService _authService = AuthService();
+  final AnnouncementService _announcementService = AnnouncementService();
+  
   String? _supervisorName;
   String? _supervisorEmail;
   String? _supervisorPhone;
   late Future<List<dynamic>> _futureTechnicians;
   late Future<List<dynamic>> _futureInterventions;
+  late Future<List<Map<String, dynamic>>> _futureAnnouncements;
+
   TextEditingController _searchController = TextEditingController();
+  TextEditingController _titleController = TextEditingController();
+  TextEditingController _contentController = TextEditingController();
+
   List<dynamic> _allTechnicians = [];
   List<dynamic> _filteredTechnicians = [];
-
   Map<String, int> _interventionCounts = {'Pending': 0, 'In Progress': 0, 'Completed': 0};
   bool _isLoadingInterventions = true;
 
@@ -29,7 +37,8 @@ class _SupervisorPageState extends State<SupervisorPage> {
     super.initState();
     _fetchSupervisorInfo();
     _futureTechnicians = _fetchTechnicians();
-    _futureInterventions = _fetchInterventions(); // Fetch intervention status counts
+    _futureInterventions = _fetchInterventions();
+    _futureAnnouncements = _announcementService.fetchAnnouncements();
   }
 
   Future<void> _fetchSupervisorInfo() async {
@@ -97,6 +106,30 @@ class _SupervisorPageState extends State<SupervisorPage> {
     });
   }
 
+  void _createAnnouncement() async {
+    if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Title and Content cannot be empty'),
+      ));
+      return;
+    }
+
+    try {
+      await _announcementService.createAnnouncement({
+        'title': _titleController.text,
+        'content': _contentController.text,
+        'audience': 'Technicians', // or 'Clients', depending on the audience
+      });
+      setState(() {
+        _futureAnnouncements = _announcementService.fetchAnnouncements();
+      });
+      _titleController.clear();
+      _contentController.clear();
+    } catch (e) {
+      print('Error creating announcement: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,7 +164,9 @@ class _SupervisorPageState extends State<SupervisorPage> {
               const SizedBox(height: 16),
               _buildSearchBar(),
               const SizedBox(height: 16),
-              _buildAnnouncements(),
+              _buildAnnouncements(), // Announcements section
+              const SizedBox(height: 16),
+              _buildCreateAnnouncementForm(), // Form to create announcements
               const SizedBox(height: 16),
               _buildInterventionOverview(), // Dynamic Intervention Overview
               const SizedBox(height: 16),
@@ -158,6 +193,75 @@ class _SupervisorPageState extends State<SupervisorPage> {
         ),
       ),
       onChanged: _filterTechnicians,
+    );
+  }
+
+  Widget _buildAnnouncements() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Recent Announcements', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _futureAnnouncements,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No announcements available'));
+                } else {
+                  final announcements = snapshot.data!;
+                  return Column(
+                    children: announcements.map((announcement) {
+                      return ListTile(
+                        title: Text(announcement['title']),
+                        subtitle: Text(announcement['content']),
+                      );
+                    }).toList(),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateAnnouncementForm() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Create New Announcement', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(labelText: 'Title'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _contentController,
+              decoration: InputDecoration(labelText: 'Content'),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _createAnnouncement,
+              child: Text('Create Announcement'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -203,37 +307,6 @@ class _SupervisorPageState extends State<SupervisorPage> {
               Text(
                 '$count',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAnnouncements() {
-    return OpenContainer(
-      closedElevation: 0,
-      openElevation: 4,
-      transitionType: ContainerTransitionType.fadeThrough,
-      closedBuilder: (context, openContainer) => ListTile(
-        onTap: openContainer,
-        leading: Icon(Icons.announcement, size: 40),
-        title: Text('Announcements', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        subtitle: Text('View recent announcements'),
-        trailing: Icon(Icons.arrow_forward_ios),
-      ),
-      openBuilder: (context, closeContainer) => Scaffold(
-        appBar: AppBar(
-          title: Text('Announcements'),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ListView(
-            children: [
-              ListTile(
-                leading: Icon(Icons.announcement),
-                title: Text('No new announcements.'),
               ),
             ],
           ),

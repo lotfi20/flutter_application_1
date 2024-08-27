@@ -1,6 +1,86 @@
 import 'package:flutter/material.dart';
+import 'service/announcementservice.dart';
 
-class MyHomePageTechnicien extends StatelessWidget {
+class MyHomePageTechnicien extends StatefulWidget {
+  @override
+  _MyHomePageTechnicienState createState() => _MyHomePageTechnicienState();
+}
+
+class _MyHomePageTechnicienState extends State<MyHomePageTechnicien> {
+  final AnnouncementService _announcementService = AnnouncementService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnnouncements();
+  }
+
+  void _loadAnnouncements() async {
+    try {
+      final announcements = await _announcementService.fetchAnnouncements();
+      for (var announcement in announcements) {
+        if (announcement['audience'] == 'Technicians' || announcement['audience'] == 'All') {
+          _showFloatingBanner(context, announcement['title'], announcement['content']);
+        }
+      }
+    } catch (e) {
+      print('Failed to load announcements: $e');
+    }
+  }
+
+  void _showFloatingBanner(BuildContext context, String title, String content) {
+    late OverlayEntry overlayEntry;  // Declare with `late` keyword
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 50.0,
+        left: MediaQuery.of(context).size.width * 0.05,
+        width: MediaQuery.of(context).size.width * 0.9,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(15.0),
+            decoration: BoxDecoration(
+              color: Colors.blueAccent,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10.0,
+                  spreadRadius: 5.0,
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        content,
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close, color: Colors.white),
+                  onPressed: () => overlayEntry.remove(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(overlayEntry);
+  }
+
   @override
   Widget build(BuildContext context) {
     // Retrieve the technician data passed from the login page
