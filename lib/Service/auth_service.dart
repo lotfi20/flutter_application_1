@@ -113,6 +113,30 @@ final response = await http.get(Uri.parse('http://localhost:9090/api/taskStatusC
     }
   }
 
+    Future<void> loginAndFetchClientId(String email, String phone) async {
+    try {
+      final response = await this.loginClient(email, phone);
+      
+      if (response.containsKey('_id')) {
+        final clientId = response['_id'];
+        print('Client ID: $clientId');
+
+        // Stockez l'ID du client pour une utilisation ultérieure
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('clientId', clientId);
+
+        // Continuez avec les autres actions après la connexion
+      } else {
+        throw Exception('ID du client non trouvé dans la réponse');
+      }
+    } catch (e) {
+      print('Erreur lors de la connexion: $e');
+      // Gérer l'erreur
+    }
+  }
+
+
+
   Future<Map<String, dynamic>> loginSupervisor(String email, String phone) async {
     final url = Uri.parse('$baseUrl/supervisors/login'); // Ensure this matches your backend setup
     final response = await http.post(
@@ -168,6 +192,8 @@ final response = await http.get(Uri.parse('http://localhost:9090/api/taskStatusC
     throw Exception('Failed to create intervention');
   }
 }
+
+
 
  Future<List<dynamic>> getInterventions() async {
     final response = await http.get(Uri.parse('$baseUrl/interventions'));
