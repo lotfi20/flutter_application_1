@@ -24,7 +24,7 @@ class AuthService {
 
   Future<List<dynamic>> getInterventionsForTechnician(String technicianId) async {
   try {
-    final response = await http.get(Uri.parse('your-api-url/interventions/$technicianId'));
+    final response = await http.get(Uri.parse('http://localhost:9090/api/interventions/$technicianId'));
 
     if (response.statusCode == 200) {
       print('API response: ${response.body}'); // Log the response to see the data
@@ -50,7 +50,7 @@ class AuthService {
 
   Future<List<dynamic>> getUsersForTechnician(String technicianId) async {
   try {
-    final response = await http.get(Uri.parse('your-api-url/users/$technicianId'));
+    final response = await http.get(Uri.parse('http://localhost:9090/users/$technicianId'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as List<dynamic>;
@@ -168,6 +168,16 @@ final response = await http.get(Uri.parse('http://localhost:9090/api/taskStatusC
     throw Exception('Failed to create intervention');
   }
 }
+
+ Future<List<dynamic>> getInterventions() async {
+    final response = await http.get(Uri.parse('$baseUrl/interventions'));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List<dynamic>;
+    } else {
+      throw Exception('Failed to load interventions');
+    }
+  }
 
 Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();

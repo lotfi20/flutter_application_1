@@ -16,19 +16,20 @@ class _SupervisorPageState extends State<SupervisorPage> {
   String? _supervisorEmail;
   String? _supervisorPhone;
   late Future<List<dynamic>> _futureTechnicians;
+  late Future<List<dynamic>> _futureInterventions;
   TextEditingController _searchController = TextEditingController();
   List<dynamic> _allTechnicians = [];
   List<dynamic> _filteredTechnicians = [];
-  
-  Map<String, int> _taskCounts = {'Pending': 0, 'In Progress': 0, 'Completed': 0};
-  bool _isLoadingTasks = true;
+
+  Map<String, int> _interventionCounts = {'Pending': 0, 'In Progress': 0, 'Completed': 0};
+  bool _isLoadingInterventions = true;
 
   @override
   void initState() {
     super.initState();
     _fetchSupervisorInfo();
     _futureTechnicians = _fetchTechnicians();
-    _fetchTaskStatusCounts(); // Fetch task status counts
+    _futureInterventions = _fetchInterventions(); // Fetch intervention status counts
   }
 
   Future<void> _fetchSupervisorInfo() async {
@@ -63,18 +64,24 @@ class _SupervisorPageState extends State<SupervisorPage> {
     }
   }
 
-  Future<void> _fetchTaskStatusCounts() async {
+  Future<List<dynamic>> _fetchInterventions() async {
     try {
-      final taskCounts = await _authService.getTaskStatusCounts();
+      final interventions = await _authService.getInterventions();
       setState(() {
-        _taskCounts = taskCounts;
-        _isLoadingTasks = false;
+        _interventionCounts = {
+          'Pending': interventions.where((intervention) => intervention['status'] == 'Pending').length,
+          'In Progress': interventions.where((intervention) => intervention['status'] == 'In Progress').length,
+          'Completed': interventions.where((intervention) => intervention['status'] == 'Completed').length,
+        };
+        _isLoadingInterventions = false;
       });
+      return interventions;
     } catch (e) {
-      print('Failed to load task status counts: $e');
+      print('Failed to load interventions: $e');
       setState(() {
-        _isLoadingTasks = false;
+        _isLoadingInterventions = false;
       });
+      return [];
     }
   }
 
@@ -99,7 +106,7 @@ class _SupervisorPageState extends State<SupervisorPage> {
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              _showNotifications();
+              Navigator.pushReplacementNamed(context, '/notifications');
             },
           ),
           IconButton(
@@ -126,13 +133,10 @@ class _SupervisorPageState extends State<SupervisorPage> {
               const SizedBox(height: 16),
               _buildAnnouncements(),
               const SizedBox(height: 16),
-              _buildTaskOverview(), // Dynamic Task Overview
+              _buildInterventionOverview(), // Dynamic Intervention Overview
               const SizedBox(height: 16),
               _buildTechnicianList(),
               const SizedBox(height: 16),
-              _buildFeedbackSection(),
-              const SizedBox(height: 16),
-              _buildRecentActivityLog(),
             ],
           ),
         ),
@@ -157,7 +161,7 @@ class _SupervisorPageState extends State<SupervisorPage> {
     );
   }
 
-  Widget _buildTaskOverview() {
+  Widget _buildInterventionOverview() {
     return Card(
       elevation: 4,
       child: Padding(
@@ -165,16 +169,16 @@ class _SupervisorPageState extends State<SupervisorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Task Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('Intervention Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            _isLoadingTasks
+            _isLoadingInterventions
                 ? Center(child: CircularProgressIndicator())
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildTaskCard('Pending', _taskCounts['Pending'] ?? 0, Colors.orangeAccent),
-                      _buildTaskCard('In Progress', _taskCounts['In Progress'] ?? 0, Colors.blueAccent),
-                      _buildTaskCard('Completed', _taskCounts['Completed'] ?? 0, Colors.greenAccent),
+                      _buildInterventionCard('Pending', _interventionCounts['Pending'] ?? 0, Colors.orangeAccent),
+                      _buildInterventionCard('In Progress', _interventionCounts['In Progress'] ?? 0, Colors.blueAccent),
+                      _buildInterventionCard('Completed', _interventionCounts['Completed'] ?? 0, Colors.greenAccent),
                     ],
                   ),
           ],
@@ -183,7 +187,7 @@ class _SupervisorPageState extends State<SupervisorPage> {
     );
   }
 
-  Widget _buildTaskCard(String status, int count, Color color) {
+  Widget _buildInterventionCard(String status, int count, Color color) {
     return Expanded(
       child: Card(
         color: color,
@@ -291,92 +295,8 @@ class _SupervisorPageState extends State<SupervisorPage> {
     );
   }
 
-  Widget _buildFeedbackSection() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Feedback',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListView(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              children: [
-                ListTile(
-                  leading: Icon(Icons.thumb_up, color: Colors.greenAccent),
-                  title: Text('Great work by Mohamed Ben Ali!'),
-                ),
-                ListTile(
-                  leading: Icon(Icons.thumb_down, color: Colors.redAccent),
-                  title: Text('Youssef Saadi needs improvement.'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentActivityLog() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Recent Activity',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListView(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              children: [
-                ListTile(
-                  leading: Icon(Icons.check_circle, color: Colors.greenAccent),
-                  title: Text('Mohamed Ben Ali completed a task.'),
-                  subtitle: Text('2 hours ago'),
-                ),
-                ListTile(
-                  leading: Icon(Icons.error, color: Colors.redAccent),
-                  title: Text('Youssef Saadi reported an issue.'),
-                  subtitle: Text('5 hours ago'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showNotifications() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Notifications'),
-          content: Text('No new notifications.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+    Navigator.pushReplacementNamed(context, '/notifications');
   }
 }
 
@@ -399,12 +319,16 @@ class SideBar extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.home),
             title: Text('Home'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/supervisor');
+            },
           ),
           ListTile(
             leading: Icon(Icons.production_quantity_limits),
-            title: Text('Products'),
-            onTap: () {},
+            title: Text('Stock'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/stocksuperviseur');
+            },
           ),
           ListTile(
             leading: Icon(Icons.bar_chart),
@@ -414,18 +338,24 @@ class SideBar extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.inbox),
             title: Text('Inbox'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/inbox');
+            },
           ),
           ListTile(
             leading: Icon(Icons.notifications),
             title: Text('Notifications'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/notifications');
+            },
           ),
           Spacer(),
           ListTile(
             leading: CircleAvatar(),
             title: Text(supervisorName ?? 'Supervisor'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/profile');
+            },
           ),
         ],
       ),

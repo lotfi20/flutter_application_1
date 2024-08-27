@@ -33,9 +33,12 @@ class StockService {
       body: json.encode(stock),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update stock');
-    }
+    if (response.statusCode == 200) {
+    print('Stock updated successfully');
+  } else {
+    print('Failed to update stock: ${response.body}');
+    throw Exception('Failed to update stock');
+  }
   }
 
   Future<void> deleteStock(String id) async {

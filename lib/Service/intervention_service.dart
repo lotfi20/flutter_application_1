@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class InterventionService {
-  final String baseUrl = 'http://localhost:9090';
+  final String baseUrl = 'http://localhost:9090/api';
 
   // Méthode pour récupérer toutes les interventions
   Future<List<dynamic>> fetchInterventions() async {
