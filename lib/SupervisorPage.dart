@@ -373,10 +373,24 @@ class _SupervisorPageState extends State<SupervisorPage> {
   }
 }
 
-class SideBar extends StatelessWidget {
+class SideBar extends StatefulWidget {
   final String? supervisorName;
 
   SideBar({this.supervisorName});
+
+  @override
+  _SideBarState createState() => _SideBarState();
+}
+
+class _SideBarState extends State<SideBar> {
+  final AnnouncementService _announcementService = AnnouncementService();
+  late Future<List<Map<String, dynamic>>> _futureAnnouncements;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureAnnouncements = _announcementService.fetchAnnouncements();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -404,9 +418,80 @@ class SideBar extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: Icon(Icons.bar_chart),
-            title: Text('Statistics'),
-            onTap: () {},
+            leading: Icon(Icons.inbox),
+            title: Text('Inbox'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/inbox');
+            },
+          ),
+          ExpansionTile(
+            leading: Icon(Icons.notifications),
+            title: Text('Notifications'),
+            children: [
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: _futureAnnouncements,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No announcements available'));
+                  } else {
+                    final announcements = snapshot.data!;
+                    return Column(
+                      children: announcements.map((announcement) {
+                        return ListTile(
+                          title: Text(announcement['title']),
+                          subtitle: Text(announcement['content']),
+                        );
+                      }).toList(),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+          Spacer(),
+          ListTile(
+            leading: CircleAvatar(),
+            title: Text(widget.supervisorName ?? 'Supervisor'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/profile');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: Column(
+        children: [
+          DrawerHeader(
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.white,
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.home),
+            title: Text('Home'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/supervisor');
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.production_quantity_limits),
+            title: Text('Stock'),
+            onTap: () {
+              Navigator.pushReplacementNamed(context, '/stocksuperviseur');
+            },
           ),
           ListTile(
             leading: Icon(Icons.inbox),
@@ -423,15 +508,9 @@ class SideBar extends StatelessWidget {
             },
           ),
           Spacer(),
-          ListTile(
-            leading: CircleAvatar(),
-            title: Text(supervisorName ?? 'Supervisor'),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/profile');
-            },
-          ),
+       
         ],
       ),
     );
   }
-}
+

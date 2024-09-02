@@ -253,6 +253,12 @@ class _StockSupervisorPageState extends State<StockSupervisorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/supervisor');
+          },
+        ),
         title: Text('Stock Supervisor'),
         actions: [
           IconButton(
@@ -343,6 +349,12 @@ class _StockSupervisorPageState extends State<StockSupervisorPage> {
                           },
                           openBuilder: (context, closeContainer) => Scaffold(
                             appBar: AppBar(
+                              leading: IconButton(
+                                icon: Icon(Icons.arrow_back), // Back button icon for the edit page
+                                onPressed: () {
+                                  Navigator.pushReplacementNamed(context, '/supervisor'); // Navigate back to the supervisor page
+                                },
+                              ),
                               title: Text('Edit Stock Details'),
                             ),
                             body: Padding(

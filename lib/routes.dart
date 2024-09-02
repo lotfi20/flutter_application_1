@@ -10,6 +10,7 @@ import 'package:flutter_application_1/stock_page.dart' as stock;
 import 'package:flutter_application_1/StockSupervisorPage.dart';
 import 'package:flutter_application_1/signuppage.dart';
 
+
 class AppRoutes {
   static Map<String, WidgetBuilder> define() {
     return {
@@ -22,6 +23,7 @@ class AppRoutes {
       '/agenda': (context) => AgendaPage(technicianId: '',), 
       '/statistics': (context) => stats.StatisticsPage(parts: []), 
       '/stocksuperviseur': (context) => const StockSupervisorPage(),
+
        '/signup': (context) => const SignUpPage(), // Use alias here
       // Add other routes here
     };
