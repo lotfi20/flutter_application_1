@@ -113,6 +113,28 @@ final response = await http.get(Uri.parse('http://localhost:9090/api/taskStatusC
     }
   }
 
+  Future<void> signupClient(String name, String email, String phone, String address) async {
+  final url = Uri.parse('http://localhost:9090/api/clients');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'address': address,
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    // Handle successful signup
+    print('Signup successful');
+  } else {
+    throw Exception('Failed to sign up');
+  }
+}
+
+
     Future<void> loginAndFetchClientId(String email, String phone) async {
     try {
       final response = await this.loginClient(email, phone);

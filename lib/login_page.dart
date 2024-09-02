@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'Service/auth_service.dart'; // Mettez à jour avec le chemin réel de votre service
+import 'Service/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,7 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isFormVisible = false;
   String _selectedRole = 'Technician';
 
-  final AuthService _authService = AuthService(); // Créez une instance d'AuthService
+  final AuthService _authService = AuthService(); 
 
   @override
   void initState() {
@@ -89,6 +89,17 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if (_selectedRole == 'Client') ...[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/signup');
+                      },
+                      child: const Text(
+                        'Don\'t have an account? Sign Up',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -163,68 +174,60 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLoginButton() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-      child: ElevatedButton(
-        onPressed: () async {
-          try {
-            Map<String, dynamic> response;
-            if (_selectedRole == 'Technician') {
-              response = await _authService.loginTechnician(emailController.text, phoneController.text);
-              debugPrint('Token: ${response['token']}');
-              debugPrint('Technician: ${response['technician']}');
-              
-              // Save technician ID to shared preferences
-              await saveTechnicianId(response['technician']['_id']);
-              
-              // Navigate to the home page with the technician data
-              Navigator.pushReplacementNamed(
-                context,
-                '/tec',
-                arguments: response['technician'],
-              );
-            } else if (_selectedRole == 'Client') {
-              response = await _authService.loginClient(emailController.text, phoneController.text);
-              debugPrint('Token: ${response['token']}');
-              debugPrint('Client: ${response['client']}');
-              
-              // Navigate to the client home page with the client data
-              Navigator.pushReplacementNamed(
-                context,
-                '/home',
-                arguments: response['client'],
-              );
-            } else if (_selectedRole == 'Supervisor') {
-              response = await _authService.loginSupervisor(emailController.text, phoneController.text);
-              debugPrint('Token: ${response['token']}');
-              debugPrint('Supervisor: ${response['supervisor']}');
-              
-              // Navigate to the supervisor home page with the supervisor data
-              Navigator.pushReplacementNamed(
-                context,
-                '/supervisor',
-                arguments: response['supervisor'],
-              );
-            }
-          } catch (e) {
-            debugPrint('Error: $e');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Login failed: $e')),
+    return ElevatedButton(
+      onPressed: () async {
+        try {
+          Map<String, dynamic> response;
+          if (_selectedRole == 'Technician') {
+            response = await _authService.loginTechnician(emailController.text, phoneController.text);
+            debugPrint('Token: ${response['token']}');
+            debugPrint('Technician: ${response['technician']}');
+            
+            await saveTechnicianId(response['technician']['_id']);
+            
+            Navigator.pushReplacementNamed(
+              context,
+              '/tec',
+              arguments: response['technician'],
+            );
+          } else if (_selectedRole == 'Client') {
+            response = await _authService.loginClient(emailController.text, phoneController.text);
+            debugPrint('Token: ${response['token']}');
+            debugPrint('Client: ${response['client']}');
+            
+            Navigator.pushReplacementNamed(
+              context,
+              '/home',
+              arguments: response['client'],
+            );
+          } else if (_selectedRole == 'Supervisor') {
+            response = await _authService.loginSupervisor(emailController.text, phoneController.text);
+            debugPrint('Token: ${response['token']}');
+            debugPrint('Supervisor: ${response['supervisor']}');
+            
+            Navigator.pushReplacementNamed(
+              context,
+              '/supervisor',
+              arguments: response['supervisor'],
             );
           }
-        },
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          backgroundColor: Colors.black87,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 80),
+        } catch (e) {
+          debugPrint('Error: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed: $e')),
+          );
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
         ),
-        child: const Text(
-          "Login",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        backgroundColor: Colors.black87,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 80),
+      ),
+      child: const Text(
+        "Login",
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
